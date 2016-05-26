@@ -30,6 +30,7 @@ executable zip-jar-exe
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
+                     , zip
                      , zip-jar
   default-language:    Haskell2010
 
