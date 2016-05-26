@@ -3,6 +3,7 @@ module Lib where
 import Codec.Archive.Zip
 import Control.Monad.IO.Class
 import Control.Monad.Catch
+import Data.ByteString.Internal
 import Path
 import Path.Internal
 
@@ -13,7 +14,7 @@ someFunc = putStrLn "someFunc"
 -- The name of the archive and its file ending should be included in the
 -- filepath.
 --
--- For example, passing in "src/Main.jar" would create an empty jar archive
+-- For example, passing in "src\/Main.jar" would create an empty jar archive
 -- named "Main.jar" in the "src" sub-directory of the current directory.
 --
 -- Note that as the function returns a Maybe action, the inner action must be
@@ -21,7 +22,7 @@ someFunc = putStrLn "someFunc"
 -- the action from the Maybe like in the example below:
 --
 -- @
--- case createJar "src/Main.jar" of
+-- case createJar "src\/Main.jar" of
 --   Just action -> action
 -- @
 createEmptyJar :: (MonadIO m, MonadCatch m) => FilePath -> Maybe (m ())
@@ -38,13 +39,40 @@ fileNameToPath file = path
   where path = case parseRelFile file of
                  Just p -> p
 
-pathsToJar files = do paths <- map parseRelFile files
-                      classesToJar paths
+-- | Adds the given ByteString as a file at the given location within the given
+-- jar archive.
+--
+-- For example, running the following would create a file named "Hello.class"
+-- containing the string "Hello, World!" within the "src" directory in the jar
+-- archive located at "build\/libs\/HelloWorld.jar".
+--
+-- @
+-- let contents = packChars "Hello, World!"
+-- addByteStringToJar "src\/Hello.class" contents "build\/libs\/HelloWorld.jar"
+-- @
+addByteStringToJar :: (MonadIO m, MonadCatch m) => FilePath -> ByteString -> FilePath -> m ()
+addByteStringToJar fileLocation contents jarLocation = maybeZip
+  where maybeZip  = withArchive jarPath zipAction
+        jarPath   = fileNameToPath jarLocation
+        zipAction = addEntry Store contents entrySel
+        entrySel  = case mkEntrySelector filePath of
+                      Just e -> e
+        filePath  = fileNameToPath fileLocation
+
+{-
+λ ~ import Data.ByteString.Internal
+λ ~ let contents = packChars "Testing"
+λ ~ addByteStringToJar "src/Main.txt" contents "src/Maybe.jar"
+-}
+
+
+--pathsToJar files = do paths <- map parseRelFile files
+--                      classesToJar paths
 
 --classesToJar :: [ClassFile] -> JarName -> JarArchive
 --classesToJar :: [Path Rel File] -> IO ()
-classesToJar filePaths = jarArchive
-  where jarArchive = map mkEntrySelector filePaths
+--classesToJar filePaths = jarArchive
+--  where jarArchive = map mkEntrySelector filePaths
 --        filePaths  = map parseRelFile fileNames
 --
 
@@ -87,7 +115,7 @@ f1 :: Path Rel File
     In the expression:
       addEntry Store (packChars "test") (mkEntrySelector f1)
 λ ~ let entrySel = case mkEntrySelector f1 of;  Just e -> e
-λ ~ :t entrySel 
+λ ~ :t entrySel
 entrySel :: EntrySelector
 λ ~ let add1 = addEntry Store (packChars "test") (entrySel)
 λ ~ let j = parseRelFile "src/Test.jar"
@@ -96,5 +124,5 @@ entrySel :: EntrySelector
 *** Exception: src/Test.jar: canonicalizePath: does not exist (No such file or directory)
 λ ~ createJar "src/Test.jar"
 λ ~ withArchive j1 add1
-λ ~ 
+λ ~
 -}
