@@ -14,10 +14,22 @@ someFunc = putStrLn "someFunc"
 -- filepath.
 --
 -- For example, passing in "src/Main.jar" would create an empty jar archive
--- named "Main.jar" in the "src" sub-directory of the current directory
-createJar :: (MonadIO m, MonadCatch m) => FilePath -> m ()
-createJar location = createArchive path (return())
-  where path = fileNameToPath location
+-- named "Main.jar" in the "src" sub-directory of the current directory.
+--
+-- Note that as the function returns a Maybe action, the inner action must be
+-- evaluated in order for the jar to be created. This can be done by seperating
+-- the action from the Maybe like in the example below:
+--
+-- @
+-- case createJar "src/Main.jar" of
+--   Just action -> action
+-- @
+createEmptyJar :: (MonadIO m, MonadCatch m) => FilePath -> Maybe (m ())
+createEmptyJar location = maybeZipAction
+  where path = parseRelFile location
+        maybeZipAction = case path of
+                           Just p  -> Just (createArchive p (return()))
+                           Nothing -> Nothing
 
 -- | Converts a String representation of a the relative path of a file into the
 -- corresponding relative file path.
