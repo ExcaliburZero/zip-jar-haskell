@@ -1,17 +1,18 @@
 module Lib where
 
-import Codec.Archive.Zip
-import Control.Monad.IO.Class
-import Control.Monad.Catch
-import Data.ByteString.Internal
-import Path
-import Path.Internal
+import Codec.Archive.Zip (addEntry, CompressionMethod(Store), createArchive, mkEntrySelector, withArchive)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Catch (MonadCatch, MonadThrow)
+import Data.ByteString.Internal (ByteString)
+import Path (parseRelFile)
 
 -- | Creates an empty jar archive at the given relative filepath location.
 -- The name of the archive and its file ending should be included in the
 -- filepath.
 --
 -- __Throws__: 'PathParseException'
+--
+-- See 'createArchive' and 'parseRelFile' for more information.
 --
 -- For example, passing in "src\/Main.jar" would create an empty jar archive
 -- named "Main.jar" in the "src" sub-directory of the current directory.
@@ -45,6 +46,8 @@ createEmptyJar location = maybeZipAction
 --
 -- __Throws__: 'PathParseException', 'EntrySelectorException',
 -- isAlreadyInUseError, isDoesNotExistError, isPermissionError, 'ParsingFailed'
+--
+-- See 'withArchive', 'mkEntrySelector', and 'parseRelFile' for more information.
 --
 -- For example, running the following would create a file named "Hello.class"
 -- containing the string "Hello, World!" within the "src" directory in the jar
