@@ -16,21 +16,11 @@ someFunc = putStrLn "someFunc"
 --
 -- For example, passing in "src\/Main.jar" would create an empty jar archive
 -- named "Main.jar" in the "src" sub-directory of the current directory.
---
--- Note that as the function returns a Maybe action, the inner action must be
--- evaluated in order for the jar to be created. This can be done by seperating
--- the action from the Maybe like in the example below:
---
--- @
--- case createJar "src\/Main.jar" of
---   Just action -> action
--- @
 createEmptyJar :: (MonadIO m, MonadCatch m) => FilePath -> Maybe (m ())
 createEmptyJar location = maybeZipAction
   where path = parseRelFile location
-        maybeZipAction = case path of
-                           Just p  -> Just (createArchive p (return()))
-                           Nothing -> Nothing
+        maybeZipAction = do p <- path
+                            createArchive p (return ())
 
 -- | Converts a String representation of a the relative path of a file into the
 -- corresponding relative file path.
@@ -50,14 +40,27 @@ fileNameToPath file = path
 -- let contents = packChars "Hello, World!"
 -- addByteStringToJar "src\/Hello.class" contents "build\/libs\/HelloWorld.jar"
 -- @
-addByteStringToJar :: (MonadIO m, MonadCatch m) => FilePath -> ByteString -> FilePath -> m ()
+--addByteStringToJar :: (MonadIO m, MonadCatch m) => FilePath -> ByteString -> FilePath -> m ()
+{-
 addByteStringToJar fileLocation contents jarLocation = maybeZip
-  where maybeZip  = withArchive jarPath zipAction
-        jarPath   = fileNameToPath jarLocation
-        zipAction = addEntry Store contents entrySel
-        entrySel  = case mkEntrySelector filePath of
-                      Just e -> e
-        filePath  = fileNameToPath fileLocation
+  where maybeZip  = case jarPath of
+                      Just j  -> case zipAction of
+                                   Just a  -> Just (withArchive j a)
+                                   Nothing -> Nothing
+                      Nothing -> Nothing
+  --where maybeZip  = withArchive jarPath zipAction
+        jarPath   = parseRelFile jarLocation
+        zipAction = case entrySel of
+                      Just e  -> Just (addEntry Store contents e)
+                      Nothing -> Nothing
+        --zipAction = addEntry Store contents entrySel
+        entrySel  = case filePath of
+                      Just p  -> Just (mkEntrySelector p)
+                      Nothing -> Nothing
+        --entrySel  = case mkEntrySelector filePath of
+        --              Just e -> e
+        filePath  = parseRelFile fileLocation
+-}
 
 {-
 λ ~ import Data.ByteString.Internal
