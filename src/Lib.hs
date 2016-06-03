@@ -32,11 +32,8 @@ createEmptyJar location = maybeZipAction
 -- @
 addByteStringToJar :: (MonadThrow m, MonadIO m) => FilePath -> ByteString -> FilePath -> m ()
 addByteStringToJar fileLocation contents jarLocation = maybeZip
-  where maybeZip = do j <- jarPath
-                      withArchive j zipAction
+  where maybeZip = jarPath >>= ((flip withArchive) zipAction)
         jarPath = parseRelFile jarLocation
-        zipAction = do e <- entrySel
-                       addEntry Store contents e
-        entrySel = do p <- filePath
-                      mkEntrySelector p
+        zipAction = entrySel >>= (addEntry Store contents)
+        entrySel = filePath >>= mkEntrySelector
         filePath = parseRelFile fileLocation
