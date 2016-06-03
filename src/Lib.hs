@@ -36,10 +36,10 @@ import Path (parseRelFile)
 --     └── Main.jar
 -- @
 createEmptyJar :: (MonadIO m, MonadCatch m) => FilePath -> m ()
-createEmptyJar location = maybeZipAction
+createEmptyJar location = zipAction
   where path = parseRelFile location
-        maybeZipAction = do p <- path
-                            createArchive p (return ())
+        zipAction = do p <- path
+                       createArchive p (return ())
 
 -- | Adds the given ByteString as a file at the given location within the given
 -- jar archive.
@@ -84,9 +84,9 @@ addByteStringToJar :: (MonadThrow m, MonadIO m)
   -> ByteString    -- ^ Contents of the new file to add
   -> FilePath      -- ^ Location of the jar to add the new file into
   -> m ()
-addByteStringToJar fileLocation contents jarLocation = maybeZip
-  where maybeZip = jarPath >>= ((flip withArchive) zipAction)
-        jarPath = parseRelFile jarLocation
-        zipAction = entrySel >>= (addEntry Store contents)
-        entrySel = filePath >>= mkEntrySelector
-        filePath = parseRelFile fileLocation
+addByteStringToJar fileLocation contents jarLocation = zipAction
+  where zipAction = jarPath >>= flip withArchive zipChange
+        zipChange = entrySel >>= addEntry Store contents
+        entrySel  = filePath >>= mkEntrySelector
+        jarPath   = parseRelFile jarLocation
+        filePath  = parseRelFile fileLocation
