@@ -27,10 +27,36 @@ createEmptyJar location = maybeZipAction
 -- archive located at "build\/libs\/HelloWorld.jar".
 --
 -- @
+-- let fileLocation = "src\/Hello.class"
 -- let contents = packChars "Hello, World!"
--- addByteStringToJar "src\/Hello.class" contents "build\/libs\/HelloWorld.jar"
+-- let jarLocation = "build\/libs\/HelloWorld.jar"
+-- addByteStringToJar fileLocation contents jarLocation
 -- @
-addByteStringToJar :: (MonadThrow m, MonadIO m) => FilePath -> ByteString -> FilePath -> m ()
+--
+-- __Before__
+--
+-- @
+-- .
+-- └── build
+--     └── libs
+--         └── HelloWorld.jar
+-- @
+--
+-- __After__
+--
+-- @
+-- .
+-- └── build
+--     └── libs
+--         └── HelloWorld.jar
+--             └── src
+--                 └── Hello.class
+-- @
+addByteStringToJar :: (MonadThrow m, MonadIO m)
+  => FilePath      -- ^ Location of the new file within the jar
+  -> ByteString    -- ^ Contents of the new file to add
+  -> FilePath      -- ^ Location of the jar to add the new file into
+  -> m ()
 addByteStringToJar fileLocation contents jarLocation = maybeZip
   where maybeZip = jarPath >>= ((flip withArchive) zipAction)
         jarPath = parseRelFile jarLocation
