@@ -13,6 +13,26 @@ import Path.Internal
 --
 -- For example, passing in "src\/Main.jar" would create an empty jar archive
 -- named "Main.jar" in the "src" sub-directory of the current directory.
+--
+-- @
+-- let jarLocation = "src/Main.jar"
+-- createEmptyJar jarLocation
+-- @
+--
+-- __Before__
+--
+-- @
+-- .
+-- └── src
+-- @
+--
+-- __After__
+--
+-- @
+-- .
+-- └── src
+--     └── Main.jar
+-- @
 createEmptyJar :: (MonadIO m, MonadCatch m) => FilePath -> m ()
 createEmptyJar location = maybeZipAction
   where path = parseRelFile location
