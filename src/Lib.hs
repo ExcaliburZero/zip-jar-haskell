@@ -17,8 +17,7 @@ import Path.Internal
 -- named "Main.jar" in the "src" sub-directory of the current directory.
 --
 -- @
--- let jarLocation = "src/Main.jar"
--- createEmptyJar jarLocation
+-- createEmptyJar "src/Main.jar"
 -- @
 --
 -- __Before__
