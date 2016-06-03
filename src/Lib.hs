@@ -11,6 +11,8 @@ import Path.Internal
 -- The name of the archive and its file ending should be included in the
 -- filepath.
 --
+-- __Throws__: 'PathParseException'
+--
 -- For example, passing in "src\/Main.jar" would create an empty jar archive
 -- named "Main.jar" in the "src" sub-directory of the current directory.
 --
@@ -41,6 +43,9 @@ createEmptyJar location = maybeZipAction
 
 -- | Adds the given ByteString as a file at the given location within the given
 -- jar archive.
+--
+-- __Throws__: 'PathParseException', 'EntrySelectorException',
+-- isAlreadyInUseError, isDoesNotExistError, isPermissionError, 'ParsingFailed'
 --
 -- For example, running the following would create a file named "Hello.class"
 -- containing the string "Hello, World!" within the "src" directory in the jar
