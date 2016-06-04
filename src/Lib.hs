@@ -91,22 +91,66 @@ addByteStringToJar fileLocation contents jarLocation = zipAction
         jarPath   = parseRelFile jarLocation
         filePath  = parseRelFile fileLocation
 
-addMultiByteStringsToJar :: (MonadThrow m, MonadIO m) => [(FilePath, ByteString)] -> FilePath -> m ()
+-- | Adds the given files into the given jar. Each file is represented by a
+-- tuple containing the location where the file will be added inside the jar,
+-- and the contents of the file as a ByteString.
+--
+-- __Throws__: 'PathParseException', 'EntrySelectorException',
+-- isAlreadyInUseError, isDoesNotExistError, isPermissionError, 'ParsingFailed'
+--
+-- See 'withArchive', 'mkEntrySelector', and 'parseRelFile' for more information.
+--
+-- For example, running the following would create two files within the jar
+-- archive located at "build\/libs\/HelloWorld.jar". The first file would be
+-- named "Hello.class" containing the string "Hello, World!" within the
+-- "helloworld" directory in the jar archive. The second file would be named
+-- \"MANIFEST.MF" containing the string "Manifest-Version: 1.0" within the
+-- \"META-INF" directory in the jar archive.
+--
+-- @
+-- let file1Location = "helloworld\/Hello.class"
+-- let file1Contents = "Hello, World!"
+-- let file1 = (file1Location, file1Contents)
+-- let file2Location = "META-INF\/MANIFEST.MF"
+-- let file2Contents = "Manifest-Version: 1.0"
+-- let file2 = (file2Location, file2Contents)
+-- let files = [file1, file2]
+-- let jarLocation = "build\/libs\/HelloWorld.jar"
+-- addMultiByteStringsToJar files jarLocation
+-- @
+--
+-- __Before__
+--
+-- @
+-- .
+-- └── build
+--     └── libs
+--         └── HelloWorld.jar
+-- @
+--
+-- __After__
+--
+-- @
+-- .
+-- └── build
+--     └── libs
+--         └── HelloWorld.jar
+--             ├── helloworld
+--             │   └── Hello.class
+--             └── META-INF
+--                 └── MANIFEST.MF
+-- @
+addMultiByteStringsToJar :: (MonadThrow m, MonadIO m)
+  => [(FilePath, ByteString)]    -- ^ Filepaths and contents of files to add into the jar
+  -> FilePath                    -- ^ Location of the jar to add the new files into
+  -> m ()
 addMultiByteStringsToJar files jarLocation = zipAction
-  --where zipAction = jarPath >>= flip withArchive zipChanges
-        --zipChanges = changes
-        --changes = undefined
-        --jarPath = undefined
   where zipAction = jarPath >>= flip withArchive zipChanges
-        zipChanges = foldr (>>) (return()) changes
-        changes = entrySels >>= (flip (zipWith addFile) fileContents)
-        --changes = zipWith addFile entrySels fileContents
-        addFile = \ path contents -> addEntry Store contents path
-        --addFile = \ entry contents -> entry >>= addEntry Store contents
+        zipChanges = sequence_ changes
+        changes = entrySels >>= flip (zipWith addFile) fileContents
+        addFile path contents = addEntry Store contents path
         jarPath = parseRelFile jarLocation
         entrySels = mapM (>>= mkEntrySelector) filePaths
         filePaths = mapM parseRelFile fileLocations
         fileLocations = map fst files
         fileContents = map snd files
-
-        --undefined
