@@ -90,3 +90,23 @@ addByteStringToJar fileLocation contents jarLocation = zipAction
         entrySel  = filePath >>= mkEntrySelector
         jarPath   = parseRelFile jarLocation
         filePath  = parseRelFile fileLocation
+
+addMultiByteStringsToJar :: (MonadThrow m, MonadIO m) => [(FilePath, ByteString)] -> FilePath -> m ()
+addMultiByteStringsToJar files jarLocation = zipAction
+  --where zipAction = jarPath >>= flip withArchive zipChanges
+        --zipChanges = changes
+        --changes = undefined
+        --jarPath = undefined
+  where zipAction = jarPath >>= flip withArchive zipChanges
+        zipChanges = foldr (>>) (return()) changes
+        changes = entrySels >>= (flip (zipWith addFile) fileContents)
+        --changes = zipWith addFile entrySels fileContents
+        addFile = \ path contents -> addEntry Store contents path
+        --addFile = \ entry contents -> entry >>= addEntry Store contents
+        jarPath = parseRelFile jarLocation
+        entrySels = mapM (>>= mkEntrySelector) filePaths
+        filePaths = mapM parseRelFile fileLocations
+        fileLocations = map fst files
+        fileContents = map snd files
+
+        --undefined
