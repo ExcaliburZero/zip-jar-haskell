@@ -1,3 +1,36 @@
+{-|
+Module      : Lib
+Description : Small utility functions for creating Jars from class files.
+Copyright   : (c) Chrisotpher Wells 2016
+License     : MIT
+
+This module provides utility functions for creating Jar archives from JVM class
+files.
+
+The general process used for creating a Jar archive is to first create an
+empty Jar in the desired location using `createEmptyJar`. After the Jar has
+been created, files can be added to it using the `addByteStringToJar` and
+`addMultiByteStringsToJar` functions.
+
+When adding multiple files to a Jar, be sure to use the
+`addMultiByteStringsToJar` function, as it writes all of the file changes in
+one action, while mapping over a list of files with `addByteStringToJar` would
+perform the file write actions all seperately.
+
+Here is a quick exampe of how to create a Jar and add a file into it.
+
+@
+-- Create the empty jar
+let jarLocation = "build/Hello.jar"
+createEmptyJar jarLocation
+
+-- Add a single file to the jar
+import Data.ByteString.Internal (packChars)
+let fileLocation = "hellopackage/Main.class"
+let fileContents = packChars "Hello, World!"
+addByteStringToJar fileLocation fileContents jarLocation
+@
+-}
 module Lib where
 
 import Codec.Archive.Zip (addEntry, CompressionMethod(Store), createArchive, mkEntrySelector, withArchive)
@@ -111,9 +144,11 @@ addByteStringToJar fileLocation contents jarLocation = zipAction
 -- let file1Location = "helloworld\/Hello.class"
 -- let file1Contents = "Hello, World!"
 -- let file1 = (file1Location, file1Contents)
+--
 -- let file2Location = "META-INF\/MANIFEST.MF"
 -- let file2Contents = "Manifest-Version: 1.0"
 -- let file2 = (file2Location, file2Contents)
+--
 -- let files = [file1, file2]
 -- let jarLocation = "build\/libs\/HelloWorld.jar"
 -- addMultiByteStringsToJar files jarLocation
